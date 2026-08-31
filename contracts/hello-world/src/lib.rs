@@ -79,3 +79,5 @@ impl PollContract {
             .unwrap_or(false)
     }
 }
+
+mod test;
