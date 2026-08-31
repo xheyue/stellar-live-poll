@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Networks } from "@stellar/stellar-sdk";
-
+import { getVotes } from "./services/contract";
 import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit/sdk";
 import { defaultModules } from "@creit.tech/stellar-wallets-kit/modules/utils";
 
@@ -18,7 +18,12 @@ function App() {
   const [status, setStatus] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
-
+  const [votes, setVotes] = useState({
+    ai: 0,
+    blockchain: 0,
+    gameDev: 0,
+  });
+  const [isLoadingVotes, setIsLoadingVotes] = useState(false);
   const fetchBalance = async (address) => {
     try {
       setIsLoadingBalance(true);
@@ -50,7 +55,31 @@ function App() {
       setIsLoadingBalance(false);
     }
   };
+const fetchVotes = async (address) => {
+  try {
+    setIsLoadingVotes(true);
 
+    const [aiVotes, blockchainVotes, gameDevVotes] =
+      await Promise.all([
+        getVotes(address, 0),
+        getVotes(address, 1),
+        getVotes(address, 2),
+      ]);
+
+    setVotes({
+      ai: aiVotes,
+      blockchain: blockchainVotes,
+      gameDev: gameDevVotes,
+    });
+  } catch (error) {
+    console.error("Vote loading error:", error);
+    setStatus(
+      error?.message || "Could not load poll results."
+    );
+  } finally {
+    setIsLoadingVotes(false);
+  }
+};
   const connectWallet = async () => {
     try {
       setIsConnecting(true);
@@ -66,11 +95,13 @@ function App() {
       }
 
       setWalletAddress(address);
-      setStatus(
-        "Wallet connected successfully."
-      );
+setStatus("Wallet connected successfully.");
+
+await fetchBalance(address);
+await fetchVotes(address);
 
       await fetchBalance(address);
+      await fetchVotes(address);
     } catch (error) {
       console.error(error);
 
@@ -82,7 +113,17 @@ function App() {
       setIsConnecting(false);
     }
   };
+<h2>Live Poll</h2>
 
+{isLoadingVotes ? (
+  <p>Loading poll results...</p>
+) : (
+  <div>
+    <p>🤖 AI — {votes.ai} votes</p>
+    <p>⛓️ Blockchain — {votes.blockchain} votes</p>
+    <p>🎮 Game Development — {votes.gameDev} votes</p>
+  </div>
+)}
   const disconnectWallet = () => {
     setWalletAddress("");
     setBalance(null);
@@ -121,7 +162,17 @@ function App() {
               ? `${balance} XLM`
               : "Balance unavailable"}
           </p>
+<h2>Live Poll</h2>
 
+{isLoadingVotes ? (
+  <p>Loading poll results...</p>
+) : (
+  <div>
+    <p>🤖 AI — {votes.ai} votes</p>
+    <p>⛓️ Blockchain — {votes.blockchain} votes</p>
+    <p>🎮 Game Development — {votes.gameDev} votes</p>
+  </div>
+)}
           <button onClick={disconnectWallet}>
             Disconnect
           </button>
