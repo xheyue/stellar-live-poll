@@ -177,12 +177,23 @@ function App() {
   const errorMessage =
     error?.message || "Transaction failed.";
 
+  const lowerError =
+    errorMessage.toLowerCase();
+
   if (
     errorMessage.includes("UnreachableCodeReached") ||
-    errorMessage.includes("already voted")
+    lowerError.includes("already voted")
   ) {
     setTransactionStatus(
       "Failed: You have already voted in this poll."
+    );
+  } else if (
+    lowerError.includes("reject") ||
+    lowerError.includes("decline") ||
+    lowerError.includes("cancel")
+  ) {
+    setTransactionStatus(
+      "Failed: Transaction was rejected by the wallet."
     );
   } else {
     setTransactionStatus(
