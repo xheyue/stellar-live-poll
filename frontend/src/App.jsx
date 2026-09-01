@@ -130,11 +130,12 @@ function App() {
 
   const handleVote = async () => {
     if (selectedOption === null) {
-      setTransactionStatus(
-        "Please select an option."
-      );
-      return;
-    }
+  setTransactionStatus(
+    "Failed: Please select an option before voting."
+  );
+  setTransactionHash("");
+  return;
+}
 
     try {
       setTransactionStatus("Pending...");
