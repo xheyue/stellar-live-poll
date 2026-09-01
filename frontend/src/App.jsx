@@ -320,11 +320,23 @@ function App() {
           )}
 
           {transactionHash && (
-            <div>
-              <p>Transaction Hash:</p>
-              <code>{transactionHash}</code>
-            </div>
-          )}
+  <div>
+    <p>Transaction Hash:</p>
+
+    <code>{transactionHash}</code>
+
+    <br />
+    <br />
+
+    <a
+      href={`https://stellar.expert/explorer/testnet/tx/${transactionHash}`}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      View on Stellar Explorer
+    </a>
+  </div>
+)}
 
           <br />
 
