@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { Networks } from "@stellar/stellar-sdk";
-import { getVotes } from "./services/contract";
+
+import {
+  getVotes,
+  prepareVoteTransaction,
+  submitVoteTransaction,
+} from "./services/contract";
+
 import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit/sdk";
 import { defaultModules } from "@creit.tech/stellar-wallets-kit/modules/utils";
 
@@ -16,14 +22,21 @@ function App() {
   const [walletAddress, setWalletAddress] = useState("");
   const [balance, setBalance] = useState(null);
   const [status, setStatus] = useState("");
+
   const [isConnecting, setIsConnecting] = useState(false);
   const [isLoadingBalance, setIsLoadingBalance] = useState(false);
+  const [isLoadingVotes, setIsLoadingVotes] = useState(false);
+
   const [votes, setVotes] = useState({
     ai: 0,
     blockchain: 0,
     gameDev: 0,
   });
-  const [isLoadingVotes, setIsLoadingVotes] = useState(false);
+
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [transactionStatus, setTransactionStatus] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
+
   const fetchBalance = async (address) => {
     try {
       setIsLoadingBalance(true);
@@ -46,8 +59,9 @@ function App() {
         xlmBalance ? xlmBalance.balance : "0"
       );
     } catch (error) {
-      console.error(error);
+      console.error("Balance error:", error);
       setBalance(null);
+
       setStatus(
         error?.message || "Balance loading failed."
       );
@@ -55,31 +69,34 @@ function App() {
       setIsLoadingBalance(false);
     }
   };
-const fetchVotes = async (address) => {
-  try {
-    setIsLoadingVotes(true);
 
-    const [aiVotes, blockchainVotes, gameDevVotes] =
-      await Promise.all([
-        getVotes(address, 0),
-        getVotes(address, 1),
-        getVotes(address, 2),
-      ]);
+  const fetchVotes = async (address) => {
+    try {
+      setIsLoadingVotes(true);
 
-    setVotes({
-      ai: aiVotes,
-      blockchain: blockchainVotes,
-      gameDev: gameDevVotes,
-    });
-  } catch (error) {
-    console.error("Vote loading error:", error);
-    setStatus(
-      error?.message || "Could not load poll results."
-    );
-  } finally {
-    setIsLoadingVotes(false);
-  }
-};
+      const [aiVotes, blockchainVotes, gameDevVotes] =
+        await Promise.all([
+          getVotes(address, 0),
+          getVotes(address, 1),
+          getVotes(address, 2),
+        ]);
+
+      setVotes({
+        ai: aiVotes,
+        blockchain: blockchainVotes,
+        gameDev: gameDevVotes,
+      });
+    } catch (error) {
+      console.error("Vote loading error:", error);
+
+      setStatus(
+        error?.message || "Could not load poll results."
+      );
+    } finally {
+      setIsLoadingVotes(false);
+    }
+  };
+
   const connectWallet = async () => {
     try {
       setIsConnecting(true);
@@ -95,15 +112,12 @@ const fetchVotes = async (address) => {
       }
 
       setWalletAddress(address);
-setStatus("Wallet connected successfully.");
-
-await fetchBalance(address);
-await fetchVotes(address);
+      setStatus("Wallet connected successfully.");
 
       await fetchBalance(address);
       await fetchVotes(address);
     } catch (error) {
-      console.error(error);
+      console.error("Wallet error:", error);
 
       setStatus(
         error?.message ||
@@ -113,20 +127,74 @@ await fetchVotes(address);
       setIsConnecting(false);
     }
   };
-<h2>Live Poll</h2>
 
-{isLoadingVotes ? (
-  <p>Loading poll results...</p>
-) : (
-  <div>
-    <p>🤖 AI — {votes.ai} votes</p>
-    <p>⛓️ Blockchain — {votes.blockchain} votes</p>
-    <p>🎮 Game Development — {votes.gameDev} votes</p>
-  </div>
-)}
+  const handleVote = async () => {
+    if (selectedOption === null) {
+      setTransactionStatus(
+        "Please select an option."
+      );
+      return;
+    }
+
+    try {
+      setTransactionStatus("Pending...");
+      setTransactionHash("");
+
+      const transactionXdr =
+        await prepareVoteTransaction(
+          walletAddress,
+          selectedOption
+        );
+
+      const { signedTxXdr } =
+        await StellarWalletsKit.signTransaction(
+          transactionXdr,
+          {
+            networkPassphrase: Networks.TESTNET,
+            address: walletAddress,
+          }
+        );
+
+      if (!signedTxXdr) {
+        throw new Error(
+          "Wallet did not return a signed transaction."
+        );
+      }
+
+      const result =
+        await submitVoteTransaction(
+          signedTxXdr
+        );
+
+      setTransactionStatus("Success");
+      setTransactionHash(result.hash);
+
+      await fetchVotes(walletAddress);
+    } catch (error) {
+      console.error("Vote error:", error);
+
+      setTransactionStatus(
+        `Failed: ${
+          error?.message || "Transaction failed."
+        }`
+      );
+    }
+  };
+
   const disconnectWallet = () => {
     setWalletAddress("");
     setBalance(null);
+
+    setVotes({
+      ai: 0,
+      blockchain: 0,
+      gameDev: 0,
+    });
+
+    setSelectedOption(null);
+    setTransactionStatus("");
+    setTransactionHash("");
+
     setStatus("Wallet disconnected.");
   };
 
@@ -134,9 +202,7 @@ await fetchVotes(address);
     <div className="app">
       <h1>Stellar Live Poll</h1>
 
-      <p>
-        Vote on-chain using Stellar Testnet
-      </p>
+      <p>Vote on-chain using Stellar Testnet</p>
 
       {!walletAddress ? (
         <button
@@ -162,17 +228,84 @@ await fetchVotes(address);
               ? `${balance} XLM`
               : "Balance unavailable"}
           </p>
-<h2>Live Poll</h2>
 
-{isLoadingVotes ? (
-  <p>Loading poll results...</p>
-) : (
-  <div>
-    <p>🤖 AI — {votes.ai} votes</p>
-    <p>⛓️ Blockchain — {votes.blockchain} votes</p>
-    <p>🎮 Game Development — {votes.gameDev} votes</p>
-  </div>
-)}
+          <h2>Live Poll</h2>
+
+          {isLoadingVotes ? (
+            <p>Loading poll results...</p>
+          ) : (
+            <div>
+              <label>
+                <input
+                  type="radio"
+                  name="poll"
+                  checked={selectedOption === 0}
+                  onChange={() =>
+                    setSelectedOption(0)
+                  }
+                />
+                🤖 AI — {votes.ai} votes
+              </label>
+
+              <br />
+
+              <label>
+                <input
+                  type="radio"
+                  name="poll"
+                  checked={selectedOption === 1}
+                  onChange={() =>
+                    setSelectedOption(1)
+                  }
+                />
+                ⛓️ Blockchain — {votes.blockchain} votes
+              </label>
+
+              <br />
+
+              <label>
+                <input
+                  type="radio"
+                  name="poll"
+                  checked={selectedOption === 2}
+                  onChange={() =>
+                    setSelectedOption(2)
+                  }
+                />
+                🎮 Game Development — {votes.gameDev} votes
+              </label>
+
+              <br />
+              <br />
+
+              <button
+                onClick={handleVote}
+                disabled={
+                  transactionStatus === "Pending..."
+                }
+              >
+                {transactionStatus === "Pending..."
+                  ? "Voting..."
+                  : "Vote"}
+              </button>
+            </div>
+          )}
+
+          {transactionStatus && (
+            <p>
+              Transaction: {transactionStatus}
+            </p>
+          )}
+
+          {transactionHash && (
+            <div>
+              <p>Transaction Hash:</p>
+              <code>{transactionHash}</code>
+            </div>
+          )}
+
+          <br />
+
           <button onClick={disconnectWallet}>
             Disconnect
           </button>
