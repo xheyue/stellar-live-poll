@@ -171,14 +171,24 @@ function App() {
 
       await fetchVotes(walletAddress);
     } catch (error) {
-      console.error("Vote error:", error);
+  console.error("Vote error:", error);
 
-      setTransactionStatus(
-        `Failed: ${
-          error?.message || "Transaction failed."
-        }`
-      );
-    }
+  const errorMessage =
+    error?.message || "Transaction failed.";
+
+  if (
+    errorMessage.includes("UnreachableCodeReached") ||
+    errorMessage.includes("already voted")
+  ) {
+    setTransactionStatus(
+      "Failed: You have already voted in this poll."
+    );
+  } else {
+    setTransactionStatus(
+      `Failed: ${errorMessage}`
+    );
+  }
+}
   };
 
   const disconnectWallet = () => {
