@@ -141,15 +141,15 @@ When a wallet attempts to vote more than once, the interface displays:
 
 ### Wallet Connected and Live Poll
 
-Add screenshot here.
+![Wallet Connected](./screenshots/wallet-connected.png)
 
 ### Successful On-Chain Vote
 
-Add screenshot here.
+![Successful Transaction](./screenshots/transaction-success.png)
 
 ### Duplicate Vote Protection
 
-Add screenshot here.
+![Duplicate Vote](./screenshots/duplicate-vote.png)
 
 ## 🔐 Security
 
