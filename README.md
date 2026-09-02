@@ -63,7 +63,7 @@ The contract prevents the same wallet from voting more than once.
 
 A successful Testnet vote transaction:
 
-    d8f08f35dc00b3e989c5bf7fdabc5b6c3000800a9e9e379516e0ce04dfb700f2
+    8850c448fb13589a155fa429915cf8c3221ab167cf695430694bf606500b433f
 
 The application also provides a direct Stellar Explorer link after a successful vote.
 
