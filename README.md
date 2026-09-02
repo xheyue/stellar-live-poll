@@ -49,7 +49,7 @@ No real XLM is used.
 
 Deployed Testnet Contract ID:
 
-    CAKRUL2B26CLC3G2PGU6BQBCSUSDMXKWKCWAZUOGXEJPOZUQHQWRE25Z
+    CB25TYXOVSRLZB4BXPPT4U763YDBS2Q53BZYFP3BWAPXKJ5JGFNV6YVX
 
 The smart contract provides the following functions:
 
@@ -63,7 +63,7 @@ The contract prevents the same wallet from voting more than once.
 
 A successful Testnet vote transaction:
 
-    8850c448fb13589a155fa429915cf8c3221ab167cf695430694bf606500b433f
+    70275ef67ce9e5ef7f718269865c8945faa39b125ab7bfe959eb146c3dad5681
 
 The application also provides a direct Stellar Explorer link after a successful vote.
 

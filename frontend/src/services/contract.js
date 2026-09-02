@@ -11,7 +11,7 @@ import {
 } from "@stellar/stellar-sdk";
 
 const CONTRACT_ID =
-  "CAKRUL2B26CLC3G2PGU6BQBCSUSDMXKWKCWAZUOGXEJPOZUQHQWRE25Z";
+  "CB25TYXOVSRLZB4BXPPT4U763YDBS2Q53BZYFP3BWAPXKJ5JGFNV6YVX";
 
 const horizonServer = new Horizon.Server(
   "https://horizon-testnet.stellar.org"

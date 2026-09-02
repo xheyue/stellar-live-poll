@@ -1,7 +1,8 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contractimpl, contracttype, Address, Env,
+    contract, contractevent, contractimpl, contracttype,
+    Address, Env,
 };
 
 #[contracttype]
@@ -9,6 +10,16 @@ use soroban_sdk::{
 pub enum DataKey {
     Votes(u32),
     HasVoted(Address),
+}
+
+#[contractevent]
+#[derive(Clone)]
+pub struct VoteCast {
+    #[topic]
+    pub voter: Address,
+    #[topic]
+    pub option: u32,
+    pub total_votes: u32,
 }
 
 #[contract]
@@ -48,15 +59,25 @@ impl PollContract {
             .get(&vote_key)
             .unwrap_or(0);
 
+        let new_total = current_votes + 1;
+
         // Oy sayısını artır
         env.storage()
             .persistent()
-            .set(&vote_key, &(current_votes + 1));
+            .set(&vote_key, &new_total);
 
         // Kullanıcının oy verdiğini kaydet
         env.storage()
             .persistent()
             .set(&voter_key, &true);
+
+        // Oy verildiğinde contract event yayınla
+        VoteCast {
+            voter,
+            option,
+            total_votes: new_total,
+        }
+        .publish(&env);
     }
 
     // Belirli bir seçeneğin oy sayısını getir
