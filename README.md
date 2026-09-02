@@ -164,3 +164,9 @@ The project was developed incrementally using Git with meaningful commits for sm
 ## 📄 License
 
 This project was created for educational purposes.
+
+### On-Chain Vote Event
+
+The Soroban smart contract emits a `VoteCast` event after every successful vote. The event includes the voter, selected option, and updated total vote count.
+
+![On-Chain Vote Event](./screenshots/event-proof.png)
